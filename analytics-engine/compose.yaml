@@ -1,0 +1,39 @@
+services:
+  registry:
+    ports:
+      - "5500:5500"
+    image: registry:latest
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_USER: akratas
+      PGDATA: /caritas/data
+    volumes:
+      - ./data:/caritas/data
+  engine:
+    build: ../common-infra/docker/.
+    pull_policy: missing
+    environment:
+      working_dir: /caritas-analytics
+    volumes:
+      - ./src/main/python/caritas-analytics/:/caritas-analytics
+    image: localhost:5500/caritas-analytics:v1
+    command: /bin/bash -c "cd /caritas-analytics && \
+      echo \"alias python=python3\" >> /root/.bashrc && \
+      sleep infinity"
+
+volumes:
+  src_volume:
+    driver: local
+    driver_opts:
+      type: none
+      device: "/caritas-analytics"
+      o: bind
+  db_volume:
+    driver: local
+    driver_opts:
+      type: none
+      device: "/caritas/data"
+      o: bind
